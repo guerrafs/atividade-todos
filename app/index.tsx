@@ -8,6 +8,49 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 type uuid = string;
 
 type TodoItem = { id: uuid; value: string; done: boolean };
+type FilterType = "all" | "done" | "notdone";
+
+function FilterTodos({ todos, filter, toggleTodo }: { todos: TodoItem[]; filter: FilterType; toggleTodo: (id: uuid) => void }) {
+  let filteredTodos = todos;
+  if (filter === "done") {
+    filteredTodos = todos.filter(todo => todo.done);
+  } else if (filter === "notdone") {
+    filteredTodos = todos.filter(todo => !todo.done);
+  }
+
+  return (
+    <FlatList
+      style={styles.list}
+      data={filteredTodos}
+      renderItem={({ item }) => <ListItem todoItem={item} toggleTodo={toggleTodo} />}
+    />
+  );
+}
+
+function ButtonFilterTodos({ currentFilter, setCurrentFilter }: { currentFilter: FilterType; setCurrentFilter: (f: FilterType) => void }) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginTop: 20 }}>
+      <Text
+        style={[styles.filterButton, currentFilter === "all" ? styles.filterButtonActive : styles.filterButtonInactive]}
+        onPress={() => setCurrentFilter("all")}
+      >
+        Todos
+      </Text>
+      <Text
+        style={[styles.filterButton, currentFilter === "done" ? styles.filterButtonActive : styles.filterButtonInactive]}
+        onPress={() => setCurrentFilter("done")}
+      >
+        Concluídos
+      </Text>
+      <Text
+        style={[styles.filterButton, currentFilter === "notdone" ? styles.filterButtonActive : styles.filterButtonInactive]}
+        onPress={() => setCurrentFilter("notdone")}
+      >
+        Pendentes
+      </Text>
+    </View>
+  );
+}
 
 function ListItem({ todoItem, toggleTodo }: { todoItem: TodoItem; toggleTodo: (id: uuid) => void }) {
 
@@ -58,12 +101,12 @@ function AddTodoForm({ addTodoHandler }: { addTodoHandler: (text: string) => voi
 
 
 export default function Index() {
-  
   const [todos, setTodos] = React.useState<TodoItem[]>([
     { id: crypto.randomUUID(), value: "Sample Todo", done: false },
     { id: crypto.randomUUID(), value: "Sample Todo 2", done: true },
     { id: crypto.randomUUID(), value: "Sample Todo 3", done: false },
   ]);
+  const [filter, setFilter] = React.useState<FilterType>("all");
 
   const addTodo = (text: string) => {
     setTodos([...todos, { id: crypto.randomUUID(), value: text, done: false }]);
@@ -80,12 +123,9 @@ export default function Index() {
           <Text style={{ fontSize: 32, fontWeight: "bold", marginTop: 20 }}>
             TODO List
           </Text>
+          <ButtonFilterTodos currentFilter={filter} setCurrentFilter={setFilter} />
           <AddTodoForm addTodoHandler={addTodo} />
-          <FlatList
-            style={styles.list}
-            data={todos.sort((a, b) => a.done === b.done ? 0 : a.done ? 1 : -1)}
-            renderItem={({ item }) => <ListItem todoItem={item} toggleTodo={toggleTodo} />}
-          />
+          <FilterTodos todos={todos} filter={filter} toggleTodo={toggleTodo} />
         </GestureHandlerRootView>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -124,6 +164,23 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 10,
     marginTop: 20,
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    borderWidth: 1
+  },
+  filterButtonActive: {
+    backgroundColor: "blue",
+    color: "white",
+    borderColor: "blue",
+  },
+  filterButtonInactive: {
+    backgroundColor: "white",
+    color: "gray",
+    borderColor: "gray",
   },
 });
 
